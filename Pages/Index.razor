@@ -1,0 +1,83 @@
+﻿@page "/"
+<h1>Hourly Manager!</h1>
+<form style="padding: 2vh;">
+    <h4>Morning Time</h4>
+    <div class="form-group row">
+        
+        <div class="col-xs-12 col-md-6 p-y-1">
+            <label>Clock-in</label>
+            <input type="time" class="form-control" @onchange="@(e => Update(e, 0))" />
+        </div>
+        <div class="col-xs-12 col-md-6 p-y-1">
+            <label>Clock-out (For Lunch)</label>
+            <input type="time" class="form-control" @onchange="@(e => Update(e, 1))" />
+        </div>
+    </div>
+    <hr />
+    <h4>Afternoon Time</h4>
+    <div class="form-group row">
+        
+        <div class="col-xs-12 col-md-6 p-y-1">
+            <label>Clock-in (From Lunch)</label>
+            <input type="time" class="form-control" @onchange="@(e => Update(e, 2))" />
+        </div>
+        <div class="col-xs-12 col-md-6 p-y-1">
+            <label>Amount to work today</label>
+            <input type="number" class="form-control" value="8" @onchange="@(e => Update(e, 3))" />
+        </div>
+    </div>
+</form>
+
+<hr />
+
+<h4>@Message</h4>
+
+
+
+@code {
+    public DateTime? In1 { get; set; } = null;
+    public DateTime? Out1 { get; set; } = null;
+    public DateTime? In2 { get; set; } = null;
+    public double Hours { get; set; } = 8;
+
+    public string Message { get; set; } = "Please fill in the fields above";
+
+    public void Update(ChangeEventArgs e, int field)
+    {
+        var val = e.Value.ToString();
+        Console.WriteLine(val);
+        switch (field) {
+            case 0:
+                In1 = DateTime.Parse(val);
+                break;
+            case 1:
+                Out1 = DateTime.Parse(val);
+                break;
+            case 2:
+                In2 = DateTime.Parse(val);
+                break;
+            case 3:
+                Hours = Convert.ToDouble(val);
+                break;
+        }
+        Console.WriteLine("Calculate out called");
+        if(In1.HasValue && In2.HasValue && Out1.HasValue)
+        {
+            // Convert Hours to a TimeSpan
+            var targetHours = TimeSpan.FromHours(Hours);
+
+            //Hours in the morning after what is needed
+            var morningHours = (Out1 - In1).GetValueOrDefault();
+            var remainingHours =  targetHours - morningHours;
+
+            if(remainingHours < TimeSpan.FromHours(0) || remainingHours > targetHours) {
+                Message = "Input fields are invalid";
+                return;
+            }
+
+            // Calculate the target time
+            DateTime targetTime = In2.GetValueOrDefault() + remainingHours;
+            Message = "Clock out at " + targetTime.ToString("t") + " to work " + Hours + " hours." ;
+        }
+    }
+}
