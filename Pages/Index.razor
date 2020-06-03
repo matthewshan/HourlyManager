@@ -50,6 +50,11 @@
     {
         var val = e.Value.ToString();
         Console.WriteLine(val);
+        if (val == "")
+        {
+            Message = "Please fill in the fields above";
+            return;
+        }
         switch (field)
         {
             case 0:
@@ -79,7 +84,7 @@
 
                 if (remainingHours < TimeSpan.FromHours(0) || remainingHours > targetHours)
                 {
-                    Message = "Input fields are invalid";
+                    Message = "Input fields are invalid. Please double check your inputs.";
                     return;
                 }
 
