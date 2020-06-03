@@ -13,6 +13,7 @@
             <input type="time" class="form-control" @onchange="@(e => Update(e, 1))" />
         </div>
     </div>
+    <h5>@Morning</h5>
     <hr />
     <h4>Afternoon Time</h4>
     <div class="form-group row">
@@ -23,7 +24,7 @@
         </div>
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Amount to work today (Integer or Decimal format)</label>
-            <input type="number" class="form-control" value="8.0" @onchange="@(e => Update(e, 3))" />
+            <input type="number" class="form-control" value="8.0" step="any" @onchange="@(e => Update(e, 3))" />
         </div>
     </div>
 </form>
@@ -40,6 +41,7 @@
     public DateTime? In2 { get; set; } = null;
     public double Hours { get; set; } = 8.0;
 
+    public string Morning { get; set; } = "";
     public string Message { get; set; } = "Please fill in the fields above";
 
     public void Update(ChangeEventArgs e, int field)
@@ -61,23 +63,28 @@
                 break;
         }
         Console.WriteLine("Calculate out called");
-        if(In1.HasValue && In2.HasValue && Out1.HasValue)
+        if(In1.HasValue && Out1.HasValue)
         {
-            // Convert Hours to a TimeSpan
-            var targetHours = TimeSpan.FromHours(Hours);
-
             //Hours in the morning after what is needed
             var morningHours = (Out1 - In1).GetValueOrDefault();
-            var remainingHours =  targetHours - morningHours;
+            Morning = $"You've put in {morningHours.Hours} Hours and {morningHours.Minutes} Minutes this morning.";
+            if (In2.HasValue)
+            {
+                // Convert Hours to a TimeSpan
+                var targetHours = TimeSpan.FromHours(Hours);
+                var remainingHours = targetHours - morningHours;
 
-            if(remainingHours < TimeSpan.FromHours(0) || remainingHours > targetHours) {
-                Message = "Input fields are invalid";
-                return;
+                if (remainingHours < TimeSpan.FromHours(0) || remainingHours > targetHours)
+                {
+                    Message = "Input fields are invalid";
+                    return;
+                }
+
+                // Calculate the target time
+                DateTime targetTime = In2.GetValueOrDefault() + remainingHours;
+                Message = "Clock out at " + targetTime.ToString("t") + " to work " + Hours + " hours.";
             }
-
-            // Calculate the target time
-            DateTime targetTime = In2.GetValueOrDefault() + remainingHours;
-            Message = "Clock out at " + targetTime.ToString("t") + " to work " + Hours + " hours." ;
         }
+
     }
 }
