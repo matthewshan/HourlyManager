@@ -22,8 +22,8 @@
             <input type="time" class="form-control" @onchange="@(e => Update(e, 2))" />
         </div>
         <div class="col-xs-12 col-md-6 p-y-1">
-            <label>Amount to work today</label>
-            <input type="number" class="form-control" value="8" @onchange="@(e => Update(e, 3))" />
+            <label>Amount to work today (Integer or Decimal format)</label>
+            <input type="number" class="form-control" value="8.0" @onchange="@(e => Update(e, 3))" />
         </div>
     </div>
 </form>
@@ -38,7 +38,7 @@
     public DateTime? In1 { get; set; } = null;
     public DateTime? Out1 { get; set; } = null;
     public DateTime? In2 { get; set; } = null;
-    public double Hours { get; set; } = 8;
+    public double Hours { get; set; } = 8.0;
 
     public string Message { get; set; } = "Please fill in the fields above";
 
