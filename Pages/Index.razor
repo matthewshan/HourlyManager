@@ -1,9 +1,10 @@
 ﻿@page "/"
+
 <h1>Hourly Manager!</h1>
-<form style="padding: 2vh;">
+<div style="padding: 2vh;">
     <h4>Morning Time</h4>
     <div class="form-group row">
-        
+
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Clock-in</label>
             <input type="time" class="form-control" @onchange="@(e => Update(e, 0))" />
@@ -17,7 +18,7 @@
     <hr />
     <h4>Afternoon Time</h4>
     <div class="form-group row">
-        
+
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Clock-in (From Lunch)</label>
             <input type="time" class="form-control" @onchange="@(e => Update(e, 2))" />
@@ -27,7 +28,7 @@
             <input type="number" class="form-control" value="8.0" step="any" @onchange="@(e => Update(e, 3))" />
         </div>
     </div>
-</form>
+</div>
 
 <hr />
 
@@ -44,11 +45,13 @@
     public string Morning { get; set; } = "";
     public string Message { get; set; } = "Please fill in the fields above";
 
+
     public void Update(ChangeEventArgs e, int field)
     {
         var val = e.Value.ToString();
         Console.WriteLine(val);
-        switch (field) {
+        switch (field)
+        {
             case 0:
                 In1 = DateTime.Parse(val);
                 break;
@@ -63,7 +66,7 @@
                 break;
         }
         Console.WriteLine("Calculate out called");
-        if(In1.HasValue && Out1.HasValue)
+        if (In1.HasValue && Out1.HasValue)
         {
             //Hours in the morning after what is needed
             var morningHours = (Out1 - In1).GetValueOrDefault();
