@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
 
 <h1>Hourly Manager!</h1>
 <div style="padding: 2vh;">
@@ -45,32 +47,20 @@
     public string Morning { get; set; } = "";
     public string Message { get; set; } = "Please fill in the fields above";
 
-
-    public void Update(ChangeEventArgs e, int field)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var val = e.Value.ToString();
-        Console.WriteLine(val);
-        if (val == "")
+        if(firstRender)
         {
-            Message = "Please fill in the fields above";
-            return;
+            In1 = await ProtectedSessionStore.GetAsync<DateTime?>("In1");
+            In2 = await ProtectedSessionStore.GetAsync<DateTime?>("In2");
+            Out1 = await ProtectedSessionStore.GetAsync<DateTime?>("Out1");
+            Hours = await ProtectedSessionStore.GetAsync<double>("Hours");
         }
-        switch (field)
-        {
-            case 0:
-                In1 = DateTime.Parse(val);
-                break;
-            case 1:
-                Out1 = DateTime.Parse(val);
-                break;
-            case 2:
-                In2 = DateTime.Parse(val);
-                break;
-            case 3:
-                Hours = Convert.ToDouble(val);
-                break;
-        }
-        Console.WriteLine("Calculate out called");
+
+    }
+
+    public void Process()
+    {
         if (In1.HasValue && Out1.HasValue)
         {
             //Hours in the morning after what is needed
@@ -93,6 +83,38 @@
                 Message = "Clock out at " + targetTime.ToString("t") + " to work " + Hours + " hours.";
             }
         }
+    }
 
+
+    public async Task Update(ChangeEventArgs e, int field)
+    {
+        var val = e.Value.ToString();
+        Console.WriteLine(val);
+        if (val == "")
+        {
+            Message = "Please fill in the fields above";
+            return;
+        }
+        switch (field)
+        {
+            case 0:
+                In1 = DateTime.Parse(val);
+                await ProtectedSessionStore.SetAsync("In1", In1);
+                break;
+            case 1:
+                Out1 = DateTime.Parse(val);
+                await ProtectedSessionStore.SetAsync("Out1", Out1);
+                break;
+            case 2:
+                In2 = DateTime.Parse(val);
+                await ProtectedSessionStore.SetAsync("In1", In1);
+                break;
+            case 3:
+                Hours = Convert.ToDouble(val);
+                await ProtectedSessionStore.SetAsync("Hours", Hours);
+                break;
+        }
+
+        Process();
     }
 }
