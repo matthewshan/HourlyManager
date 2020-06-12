@@ -1,17 +1,22 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.ProtectedBrowserStorage
+@using System.Globalization
+@inject ProtectedSessionStorage ProtectedSessionStore
 
 <h1>Hourly Manager!</h1>
+
+<label>*NEW* Your inputs will be saved as long as you keep this tab open.</label>
 <div style="padding: 2vh;">
     <h4>Morning Time</h4>
     <div class="form-group row">
 
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Clock-in</label>
-            <input type="time" class="form-control" @onchange="@(e => Update(e, 0))" />
+            <input type="time" class="form-control" @onchange="@(e => Update(e, 0))" value="@In1Stamp" />
         </div>
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Clock-out (For Lunch)</label>
-            <input type="time" class="form-control" @onchange="@(e => Update(e, 1))" />
+            <input type="time" class="form-control" @onchange="@(e => Update(e, 1))" value="@Out1Stamp" />
         </div>
     </div>
     <h5>@Morning</h5>
@@ -21,18 +26,20 @@
 
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Clock-in (From Lunch)</label>
-            <input type="time" class="form-control" @onchange="@(e => Update(e, 2))" />
+            <input type="time" class="form-control" @onchange="@(e => Update(e, 2))" value="@In2Stamp" />
         </div>
         <div class="col-xs-12 col-md-6 p-y-1">
             <label>Amount to work today (Integer or Decimal format)</label>
-            <input type="number" class="form-control" value="8.0" step="any" @onchange="@(e => Update(e, 3))" />
+            <input type="number" class="form-control" value="@Hours.ToString("N2")" step="any" @onchange="@(e => Update(e, 3))" />
         </div>
     </div>
+    <a class="text-right" href="" @onclick="Reset">Reset Inputs</a>
+    <h4 class="mt-4">@Message</h4>
 </div>
 
 <hr />
 
-<h4>@Message</h4>
+
 
 
 
@@ -42,35 +49,52 @@
     public DateTime? In2 { get; set; } = null;
     public double Hours { get; set; } = 8.0;
 
+    public string In1Stamp { get; set; } = "";
+    public string Out1Stamp { get; set; } = "";
+    public string In2Stamp { get; set; } = "";
+
     public string Morning { get; set; } = "";
     public string Message { get; set; } = "Please fill in the fields above";
 
-
-    public void Update(ChangeEventArgs e, int field)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var val = e.Value.ToString();
-        Console.WriteLine(val);
-        if (val == "")
+        In1 = await ProtectedSessionStore.GetAsync<DateTime?>("In1");
+        In2 = await ProtectedSessionStore.GetAsync<DateTime?>("In2");
+        Out1 = await ProtectedSessionStore.GetAsync<DateTime?>("Out1");
+        Hours = await ProtectedSessionStore.GetAsync<double>("Hours");
+
+        UpdateLabels();
+        Process();
+
+        if (firstRender)
         {
-            Message = "Please fill in the fields above";
-            return;
+            StateHasChanged();
         }
-        switch (field)
-        {
-            case 0:
-                In1 = DateTime.Parse(val);
-                break;
-            case 1:
-                Out1 = DateTime.Parse(val);
-                break;
-            case 2:
-                In2 = DateTime.Parse(val);
-                break;
-            case 3:
-                Hours = Convert.ToDouble(val);
-                break;
-        }
-        Console.WriteLine("Calculate out called");
+    }
+
+    public void UpdateLabels()
+    {
+        if (Hours == 0)
+            Hours = 8;
+
+        if (In1.HasValue)
+            In1Stamp = In1.GetValueOrDefault().ToString("t", new CultureInfo("de-DE"));
+        else
+            In1Stamp = "";
+
+        if (Out1.HasValue)
+            Out1Stamp = Out1.GetValueOrDefault().ToString("t", new CultureInfo("de-DE"));
+        else
+            Out1Stamp = "";
+
+        if (In2.HasValue)
+            In2Stamp = In2.GetValueOrDefault().ToString("t", new CultureInfo("de-DE"));
+        else
+            In2Stamp = "";
+    }
+
+    public void Process()
+    {
         if (In1.HasValue && Out1.HasValue)
         {
             //Hours in the morning after what is needed
@@ -92,7 +116,61 @@
                 DateTime targetTime = In2.GetValueOrDefault() + remainingHours;
                 Message = "Clock out at " + targetTime.ToString("t") + " to work " + Hours + " hours.";
             }
+            else
+            {
+                Message = "Please fill in the fields above";
+            }
+        }
+        else
+        {
+            Morning = "";
+        }
+    }
+
+
+    public async Task Update(ChangeEventArgs e, int field)
+    {
+        var val = e.Value.ToString();
+        Console.WriteLine(val);
+        if (val == "")
+        {
+            Message = "Please fill in the fields above";
+            return;
+        }
+        switch (field)
+        {
+            case 0:
+                In1 = DateTime.Parse(val);
+                await ProtectedSessionStore.SetAsync("In1", In1);
+                break;
+            case 1:
+                Out1 = DateTime.Parse(val);
+                await ProtectedSessionStore.SetAsync("Out1", Out1);
+                break;
+            case 2:
+                In2 = DateTime.Parse(val);
+                await ProtectedSessionStore.SetAsync("In2", In2);
+                break;
+            case 3:
+                Hours = Convert.ToDouble(val);
+                await ProtectedSessionStore.SetAsync("Hours", Hours);
+                break;
         }
 
+        Process();
+        StateHasChanged();
+    }
+
+    protected async Task Reset() {
+        In1 = null;
+        await ProtectedSessionStore.SetAsync("In1", In1);
+        Out1 = null;
+        await ProtectedSessionStore.SetAsync("Out1", Out1);
+        In2 = null;
+        await ProtectedSessionStore.SetAsync("In2", In2);
+        Hours = 8.0;
+        await ProtectedSessionStore.SetAsync("Hours", Hours);
+        UpdateLabels();
+        StateHasChanged();
     }
 }
